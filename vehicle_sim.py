@@ -3,7 +3,7 @@
 # http://inventwithpython.com/pygame
 # Released under a "Simplified BSD" license
 
-import random, pygame, sys, math
+import sys
 from vehicle_agent import Vehicle
 from city_map import Map, make_map
 from constants import *
@@ -13,10 +13,6 @@ from pygame.locals import *
 def main():
     global FPSCLOCK, DISPLAYSURF, BASICFONT
 
-    # pygame.init()
-    # FPSCLOCK = pygame.time.Clock()
-    # DISPLAYSURF = pygame.display.set_mode((WINDOWWIDTH, WINDOWHEIGHT))
-    # BASICFONT = pygame.font.Font('freesansbold.ttf', 18)
     pygame.display.set_caption('ALASKAN BULL WORMS!!!!!')
 
     show_start_screen()
@@ -111,11 +107,9 @@ def terminate():
 #     return {'x': random.randint(0, CELLWIDTH - 1), 'y': random.randint(0, CELLHEIGHT - 1)}
 
 
-def draw_grid(room):
-    for tile_row in room.tiles:
+def draw_grid(city_map):
+    for tile_row in city_map.tiles:
         for tile in tile_row:
-            # if tile is None:
-            #     continue
             x = tile.position['x'] * CELLSIZE
             y = tile.position['y'] * CELLSIZE
 
@@ -123,15 +117,8 @@ def draw_grid(room):
             pygame.draw.rect(DISPLAYSURF, TILE, tile_rect)
 
             obstacle_or_dirt_rect = pygame.Rect(x, y, CELLSIZE, CELLSIZE)
-            # if tile.drop:
-            #     pygame.draw.rect(DISPLAYSURF, BLACK, obstacle_or_dirt_rect)
             if tile.is_road:
                 pygame.draw.rect(DISPLAYSURF, FURNITURE, obstacle_or_dirt_rect)
-            # elif tile.is_dirty():
-            #     if tile.is_very_dirty():
-            #         pygame.draw.rect(DISPLAYSURF, HEAVYDIRT, obstacle_or_dirt_rect)
-            #     else:
-            #         pygame.draw.rect(DISPLAYSURF, DIRT, obstacle_or_dirt_rect)
 
             pygame.draw.rect(DISPLAYSURF, GRAY, tile_rect, 1)  # 1 is the width of the rectangles' outline
 

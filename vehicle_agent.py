@@ -1,4 +1,4 @@
-import random, pygame
+import random
 from constants import *
 
 
@@ -10,19 +10,7 @@ direction_backwards = {UP: DOWN, LEFT: RIGHT, DOWN: UP, RIGHT: LEFT}
 
 class Vehicle:
     def __init__(self, car_body_color, car_outline_color, city_map):
-        # startx = random.randint(5, CELLWIDTH - 6)
-        # starty = random.randint(5, CELLHEIGHT - 6)
-
-        # self.position = {'x': startx, 'y': starty}
-        self._position = None
-        self.position = city_map.get_car_starting_tile()
-
-        # while city_map.get_current_tile(self.position) is None:
-        #     startx = random.randint(5, CELLWIDTH - 6)
-        #     starty = random.randint(5, CELLHEIGHT - 6)
-        #
-        #     self.position = {'x': startx, 'y': starty}
-
+        self.position = city_map.get_car_starting_tile_position()
         self.direction = RIGHT
 
         # Each successive move made by the car is drawn from this.  Initially, it's most likely that the car will
@@ -36,14 +24,6 @@ class Vehicle:
         self.body_color = car_body_color
         self.outline_color = car_outline_color
         self.dist_in_same_direction = 0
-
-    @property
-    def position(self):
-        return self._position
-
-    @position.setter
-    def position(self, new_pos):
-        self._position = {'x': new_pos['x'], 'y': new_pos['y']}
 
     def get_direction_to_left(self, direction):
         """Gets the direction to the left of the car, from the perspective of the direction that the car is facing.
@@ -136,48 +116,41 @@ class Vehicle:
         :param tile: `Tile` object
         :return:     Bool, `True` if car can move onto tile, `False` otherwise
         """
-        # return tile is not None and not tile.drop and not tile.obstacle and not tile.pet and not tile.roomba
         try:
             return tile.is_road and not tile.car
         except AttributeError:
             pass
 
-    def get_tile_in_direction(self, direction, room):
+    def get_tile_in_direction(self, direction, city_map):
         if direction == UP:
-            return room.get_tile_up(self.position)
+            return city_map.get_tile_up(self.position)
         elif direction == RIGHT:
-            return room.get_tile_right(self.position)
+            return city_map.get_tile_right(self.position)
         elif direction == DOWN:
-            return room.get_tile_down(self.position)
+            return city_map.get_tile_down(self.position)
         elif direction == LEFT:
-            return room.get_tile_left(self.position)
+            return city_map.get_tile_left(self.position)
 
-    def move(self, room):
-        # if room.get_current_tile(self.position).clean_dirt() <= 1:
+    def move(self, city_map):
         for possible_move in self.possible_moves:
-            proposed_tile = self.get_tile_in_direction(possible_move, room)
+            proposed_tile = self.get_tile_in_direction(possible_move, city_map)
             if self.can_move_to_tile(proposed_tile):
-                self.move_in_direction(possible_move, proposed_tile, room.get_current_tile(self.position))
+                self.move_in_direction(possible_move, proposed_tile, city_map.get_current_tile(self.position))
                 return
 
         # If we've made it here, then none of the possible moves in the list of possible moves was valid, meaning
         # that the only valid move is to move backwards
         self.move_in_direction(self.get_direction_backwards(self.direction),
-                               self.get_tile_in_direction(self.get_direction_backwards(self.direction), room),
-                               room.get_current_tile(self.position))
-
-        # If we've sucked up more than one unit of dirt, this tile is quite dirty, so instead of moving on, we stay for
-        # an extra turn (eventually leaving once the tile is only slightly dirty (i.e., we suck up only one unit of dirt
-        # else:
-        #     return
+                               self.get_tile_in_direction(self.get_direction_backwards(self.direction), city_map),
+                               city_map.get_current_tile(self.position))
 
     def draw(self):
         x = self.position['x'] * CELLSIZE
         y = self.position['y'] * CELLSIZE
         car_rect = pygame.Rect(x, y, CELLSIZE, CELLSIZE)
         pygame.draw.rect(DISPLAYSURF, self.outline_color, car_rect)
-        car_inner_rect = pygame.Rect(x + 4, y + 4, CELLSIZE - 8, CELLSIZE - 8)
-        pygame.draw.rect(DISPLAYSURF, self.body_color, car_inner_rect)
+        # car_inner_rect = pygame.Rect(x + 4, y + 4, CELLSIZE - 8, CELLSIZE - 8)
+        # pygame.draw.rect(DISPLAYSURF, self.body_color, car_inner_rect)
 
     def explode(self):
         # print("BOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOM!!!!!!")

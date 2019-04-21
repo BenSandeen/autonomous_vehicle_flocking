@@ -9,15 +9,8 @@ assert WINDOWWIDTH % CELLSIZE == 0, "Window width must be a multiple of cell siz
 assert WINDOWHEIGHT % CELLSIZE == 0, "Window height must be a multiple of cell size."
 CELLWIDTH = int(WINDOWWIDTH / CELLSIZE)
 CELLHEIGHT = int(WINDOWHEIGHT / CELLSIZE)
-# MAX_DIRTINESS = 10
-# MIN_DIRTINESS = 0
-# assert MAX_DIRTINESS > (MIN_DIRTINESS + 3)  # Make sure there's at least a bit of difference
-# MED_DIRTINESS = int((MAX_DIRTINESS - MIN_DIRTINESS) / 2)
-# NUM_OBSTACLES = 165
-# NUM_PETS = 77
 NUM_CARS = 31
 MAX_DIST_WITHOUT_TURNING = int(min(CELLWIDTH, CELLHEIGHT) / 3)
-# NUM_DROPS = 42
 
 #                   R    G    B
 WHITE           = (255, 255, 255)
@@ -44,6 +37,7 @@ DOWN = 'down'
 LEFT = 'left'
 RIGHT = 'right'
 
+# Initialize some constants
 pygame.init()
 
 FPSCLOCK = pygame.time.Clock()
