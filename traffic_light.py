@@ -1,7 +1,10 @@
-from constants import *
 import enum
-import random, math
+import random
 from copy import deepcopy
+
+import math
+
+from constants import *
 
 
 class LightColor(enum.Enum):
@@ -25,8 +28,23 @@ class TrafficLight:
         self.yellow_duration = 6
 
         # Since lights facing in opposite directions should always change together, we use a single timer for each pair
-        self.up_and_down_time_until_light_change = random.randint(20, 30)
+        self.up_and_down_time_until_light_change = random.randint(40, 60)
         self.left_and_right_time_until_light_change = math.inf
+
+        # Used to change lights more quickly when cars are waiting at a red light
+        self.car_is_waiting_on_light = self.reset_cars_waiting_on_lights()
+
+    def reset_cars_waiting_on_lights(self):
+        return {UP: 0, DOWN: 0, LEFT: 0, RIGHT: 0}
+
+    def add_car_waiting_on_light(self, direction_of_travel):
+        """Increments counter for number of cars waiting on a light
+
+        :param direction_of_travel: Direction in which the car is travelling
+        """
+        # if direction_of_travel == UP:
+        #     self.car_is_waiting_on_light[UP] += 1
+        self.car_is_waiting_on_light[direction_of_travel] += 1
 
     def get_rgb_color_value(self, light_color):
         if light_color == LightColor.green:
@@ -51,9 +69,12 @@ class TrafficLight:
         times, for simplicity.  This way we can just have the main loop call into this every iteration and this will
         handle how frequently to change the lights
         """
-        if self.up_and_down_time_until_light_change != 0:
-            self.up_and_down_time_until_light_change -= 1
+        if self.up_and_down_time_until_light_change >= 0:
+            # Lights change faster depending on how many cars are waiting on them
+            self.up_and_down_time_until_light_change -= (
+                        1 + self.car_is_waiting_on_light[LEFT] + self.car_is_waiting_on_light[RIGHT])
         else:
+            self.car_is_waiting_on_light = self.reset_cars_waiting_on_lights()
             self.up = self.get_next_light_color(self.up)
             self.down = self.get_next_light_color(self.down)
             assert self.up == self.down
@@ -70,9 +91,11 @@ class TrafficLight:
 
             return
 
-        if self.left_and_right_time_until_light_change != 0:
-            self.left_and_right_time_until_light_change -= 1
+        if self.left_and_right_time_until_light_change >= 0:
+            self.left_and_right_time_until_light_change -= (
+                        1 + self.car_is_waiting_on_light[UP] + self.car_is_waiting_on_light[DOWN])
         else:
+            self.car_is_waiting_on_light = self.reset_cars_waiting_on_lights()
             self.left = self.get_next_light_color(self.left)
             self.right = self.get_next_light_color(self.right)
             assert self.left == self.right
@@ -99,7 +122,7 @@ class TrafficLight:
 
     def get_light_duration(self, light_color):
         if light_color == LightColor.green:
-            return random.randint(20, 30)
+            return random.randint(40, 60)
         elif light_color == LightColor.yellow:
             return self.yellow_duration
         # Red lights wait on lights in other direction to become red before changing
@@ -107,10 +130,6 @@ class TrafficLight:
             return math.inf
 
     def draw(self):
-        x = self.position['x'] * CELLSIZE
-        y = self.position['y'] * CELLSIZE
-        car_rect = pygame.Rect(x, y, CELLSIZE, CELLSIZE)
-
         top_left     = (self.position['x'] * CELLSIZE,                  self.position['y'] * CELLSIZE)
         top_right    = (self.position['x'] * CELLSIZE + CELLSIZE,       self.position['y'] * CELLSIZE)
         bottom_left  = (self.position['x'] * CELLSIZE,                  self.position['y'] * CELLSIZE + CELLSIZE)

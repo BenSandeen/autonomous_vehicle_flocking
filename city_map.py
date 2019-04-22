@@ -144,9 +144,17 @@ class Map:
         # If we're not at an intersection, just get the two intersections at end of the which block we're on
         if (position['x'], position['y']) not in [(tile.position['x'], tile.position['y']) for tile in
                                                   self.intersection_tiles]:
-            adjacent_tiles.append(self.get_tile_at_position(self.get_nearest_intersections_positions(position)))
-            adjacent_tiles.append(self.get_tile_at_position(
-                self.get_nearest_intersections_positions(position, excluded_intersections=[adjacent_tiles[0]])))
+            # adjacent_tiles.append(self.get_tile_at_position(self.get_nearest_intersections_positions(position)))
+            # adjacent_tiles.append(self.get_tile_at_position(
+            #     self.get_nearest_intersections_positions(position, excluded_intersections=[adjacent_tiles[0]])))
+
+            if position['x'] in [t.position['x'] for t in self.intersection_tiles]:
+                adjacent_tiles.append(self.get_intersection_up(position))
+                adjacent_tiles.append(self.get_intersection_down(position))
+            elif position['y'] in [t.position['y'] for t in self.intersection_tiles]:
+                adjacent_tiles.append(self.get_intersection_left(position))
+                adjacent_tiles.append(self.get_intersection_right(position))
+
             return adjacent_tiles
 
         # Check nearest four intersection tiles, because our intersections can only have a maximum of four neighbors
@@ -179,6 +187,102 @@ class Map:
                         adjacent_tiles.append(tile)
 
         return adjacent_tiles
+
+    def get_intersection_up(self, position):
+        """Assumes position is in a road going up and down
+
+        :param position:
+        :return:
+        """
+        for tile in [t for t in self.intersection_tiles if t.position['x'] == position['x']]:
+            if position['y'] - BLOCKLENGTH <= tile.position['y'] <= position['y']:
+                return tile
+
+        raise ValueError(f"Couldn't find intersection up")
+
+    def get_intersection_down(self, position):
+        """Assumes position is in a road going up and down
+
+        :param position:
+        :return:
+        """
+        for tile in [t for t in self.intersection_tiles if t.position['x'] == position['x']]:
+            if position['y'] <= tile.position['y'] <= position['y'] + BLOCKLENGTH:
+                return tile
+
+        raise ValueError(f"Couldn't find intersection up")
+
+    def get_intersection_left(self, position):
+        """Assumes position is in a road going left and right
+
+        :param position:
+        :return:
+        """
+        for tile in [t for t in self.intersection_tiles if t.position['y'] == position['y']]:
+            if position['x'] - BLOCKLENGTH <= tile.position['x'] <= position['x']:
+                return tile
+
+        raise ValueError(f"Couldn't find intersection up")
+
+    def get_intersection_right(self, position):
+        """Assumes position is in a road going left and right
+
+        :param position:
+        :return:
+        """
+        for tile in [t for t in self.intersection_tiles if t.position['y'] == position['y']]:
+            if position['x'] <= tile.position['x'] <= position['x'] + BLOCKLENGTH:
+                return tile
+
+        raise ValueError(f"Couldn't find intersection up")
+
+    def get_tiles_between_tile_a_and_tile_b(self, tile_a, tile_b):
+        """Gets list of tiles between `tile_a` and `tile_b`.  These tiles must be in either the same column or row, and
+        must only be connected by tiles in the same column or row, respectively (i.e., we don't want to count tiles in
+        the same column but which are in the middle of left-to-right blocks; basically, we want a path that a car can
+        drive without moving to a different column or row, respectively)
+
+        :param tile_a: Starting tile (exclusive)
+        :param tile_b: Finishing tile (inclusive)
+        :return:       List of the tiles in the range
+        """
+        if tile_a.position['x'] != tile_b.position['x'] and tile_a.position['y'] != tile_b.position['y']:
+            raise ValueError(f"Tiles must be in either the same column or the same row!")
+
+        tiles = []
+
+        # We can use the intersections to check whether the tiles can be connected by a straight line of road tiles
+        if tile_a.position['x'] == tile_b.position['x']:
+            if tile_a.position['x'] not in [t.position['x'] for t in self.intersection_tiles]:
+                raise ValueError(f"Tiles must be connected by a road in the same column!")
+            if tile_a.position['y'] > tile_b.position['y']:
+                next_tile_method = self.get_tile_up
+            elif tile_a.position['y'] < tile_b.position['y']:
+                next_tile_method = self.get_tile_down
+            else:
+                raise ValueError(f"Tiles shouldn't be the same!")
+
+            tiles.append(self.get_tile_at_position(next_tile_method(tile_a.position).position))
+
+            while tile_b not in tiles:
+                tiles.append(self.get_tile_at_position(next_tile_method(tiles[-1].position).position))
+
+        if tile_a.position['y'] == tile_b.position['y']:
+            if tile_a.position['y'] not in [t.position['y'] for t in self.intersection_tiles]:
+                raise ValueError(f"Tiles must be connected by a road in the same row!")
+            if tile_a.position['x'] > tile_b.position['x']:
+                next_tile_method = self.get_tile_left
+            elif tile_a.position['x'] < tile_b.position['x']:
+                next_tile_method = self.get_tile_right
+            else:
+                raise ValueError(f"Tiles shouldn't be the same!")
+
+            tiles.append(self.get_tile_at_position(next_tile_method(tile_a.position).position))
+
+            while tile_b not in tiles:
+                tiles.append(self.get_tile_at_position(next_tile_method(tiles[-1].position).position))
+
+        return tiles
 
     def get_flat_list_of_tiles(self):
         tiles = []
@@ -241,7 +345,7 @@ def make_map():
                 tiles[row_idx].append(Tile(position={'x': x, 'y': y}, is_road=True))
                 continue
 
-            elif y % 24 == 0 or x % 24 == 0:
+            elif y % BLOCKLENGTH == 0 or x % BLOCKLENGTH == 0:
                 tiles[row_idx].append(Tile(position={'x': x, 'y': y}, is_road=True))
                 continue
 

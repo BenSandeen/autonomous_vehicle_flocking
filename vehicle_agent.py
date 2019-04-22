@@ -1,3 +1,5 @@
+import warnings
+
 from city_map import *
 
 all_directions = [UP, DOWN, LEFT, RIGHT]
@@ -22,6 +24,8 @@ class Vehicle:
         self.body_color = car_body_color
         self.outline_color = car_outline_color
         self.destination_reached = False
+        self.frames_waited_at_red_lights = 0
+        self.velocity = 1
 
     def get_path(self):
         """This is ugly and unsophisticated, but it gets the cars to their goals.  Besides, the point of my project is
@@ -43,33 +47,37 @@ class Vehicle:
         path.append(closest_neighbor)
 
         while destination_tile not in path:
-            neighbors = self.city_map.get_adjacent_intersections(path[-1].position)
             current_tile = path[-1]
+            neighbors = self.city_map.get_adjacent_intersections(current_tile.position)
             closest_neighbor = None
             closest_neighbor_distance = math.inf
             for neighbor in neighbors:
-                # If we're on the same row
-                if current_tile.position['y'] == self.destination['y']:
-                    # And if the destination is between our current position and the next intersection over, go to it
-                    if (current_tile.position['x'] < self.destination['x'] < neighbor.position['x'] or
-                            neighbor.position['x'] < self.destination['x'] < current_tile.position['x']):
-                        path.append(destination_tile)
-                        break
-                    # If the neighbor gets us closer, go to it
-                    elif distance(neighbor.position, self.destination) < distance(current_tile.position, self.destination):
-                        path.append(neighbor)
-                        break
-                if current_tile.position['x'] == self.destination['x']:
-                    if (current_tile.position['y'] < self.destination['y'] < neighbor.position['y'] or
-                            neighbor.position['y'] < self.destination['y'] < current_tile.position['y']):
-                        path.append(destination_tile)
-                        break
-                    # If the neighbor gets us closer, go to it
-                    elif distance(neighbor.position, self.destination) < distance(current_tile.position, self.destination):
-                        path.append(neighbor)
-                        break
+                if current_tile.position['y'] == self.destination['y'] or current_tile.position['x'] == \
+                        self.destination['x']:
+                    # If we're on the same row
+                    if current_tile.position['y'] == self.destination['y']:
+                        # And if the destination is between our current position and the next intersection over, go to it
+                        if (current_tile.position['x'] < self.destination['x'] <= neighbor.position['x'] or
+                                neighbor.position['x'] <= self.destination['x'] < current_tile.position['x']):
+                            path.append(destination_tile)
+                            break
+                        # If the neighbor gets us closer, go to it
+                        elif distance(neighbor.position, self.destination) < distance(current_tile.position,
+                                                                                      self.destination):
+                            path.append(neighbor)
+                            break
+                    if current_tile.position['x'] == self.destination['x']:
+                        if (current_tile.position['y'] < self.destination['y'] <= neighbor.position['y'] or
+                                neighbor.position['y'] <= self.destination['y'] < current_tile.position['y']):
+                            path.append(destination_tile)
+                            break
+                        # If the neighbor gets us closer, go to it
+                        elif distance(neighbor.position, self.destination) < distance(current_tile.position,
+                                                                                      self.destination):
+                            path.append(neighbor)
+                            break
 
-                if distance(neighbor.position, self.destination) < closest_neighbor_distance:
+                elif distance(neighbor.position, self.destination) < closest_neighbor_distance:
                     closest_neighbor = neighbor
                     closest_neighbor_distance = distance(neighbor.position, self.destination)
 
@@ -139,6 +147,7 @@ class Vehicle:
         :param next_tile:     `Tile` object onto which the car is moving
         :param previous_tile: `Tile` object off of which the car is moving
         """
+        # for ii in range(self.velocity):
         # Don't run over any cars or blow through traffic lights
         if self.can_move_to_tile(next_tile):
             self.turn_to_direction_map[direction]()  # Adding the parentheses actually calls the method
@@ -146,6 +155,10 @@ class Vehicle:
             previous_tile.remove_car(self)
             if self.destination == self.position:
                 self.destination_reached = True
+        else:  # if we didn't move, update previous position to be current position
+            # TODO: change `self.go_up()` and other movement methods to not update `self.previous_position` so that we
+            #       only do it once here
+            self.previous_position = deepcopy(self.position)
 
     def destroy(self):
         """To be called by the main simulator when the car reaches its destination.  It removes the car from the tile
@@ -168,6 +181,11 @@ class Vehicle:
                         # For simplicity, each tile represents a whole road (i.e., traffic in both directions)
                         elif tile.car.direction != self.direction:
                             return True
+                    elif tile.light.get_light_for_direction_of_travel(self.direction) == LightColor.red:
+                        self.frames_waited_at_red_lights += 1
+                        # Only add one to the "waiting list" if the car just arrived; don't count subsequent iterations
+                        if self.previous_position != self.position:
+                            tile.light.add_car_waiting_on_light(self.direction)
             return False
         except AttributeError:
             pass
@@ -183,31 +201,74 @@ class Vehicle:
             return city_map.get_tile_left(self.position)
 
     def move(self, city_map):
-        new_direction = self.direction
+        # Yes, I know we do this below, but we need to check it here as well.  I know it's ugly, but it works
         if self.position == self.path[0].position:
             self.path = self.path[1:]  # We've reached the next intersection, so we no longer need it as a waypoint
+        elif self.position == self.destination:
+            self.destination_reached = True
+            return
 
-        # If we're on the right column for the next waypoint...
-        if self.path[0].position['x'] == self.position['x']:
-            # If next waypoint is up...
-            if self.path[0].position['y'] < self.position['y']:
-                new_direction = UP
-            # If next waypoint is down...
-            elif self.position['y'] < self.path[0].position['y']:
-                new_direction = DOWN
+        self.velocity = self.get_velocity()
+        for ii in range(self.velocity):
+            new_direction = self.direction  # Initialize `new_direction` so it's not `None` when we need to access it
+            if self.position == self.path[0].position:
+                self.path = self.path[1:]  # We've reached the next intersection, so we no longer need it as a waypoint
+            elif self.position == self.destination:
+                self.destination_reached = True
+                return
 
-        # ...or maybe we're on the right row instead...
-        elif self.path[0].position['y'] == self.position['y']:
-            # If next waypoint is left...
-            if self.path[0].position['x'] < self.position['x']:
-                new_direction = LEFT
-            # If next waypoint is right...
-            elif self.position['x'] < self.path[0].position['x']:
-                new_direction = RIGHT
+            # If we're on the right column for the next waypoint...
+            if self.path[0].position['x'] == self.position['x']:
+                # If next waypoint is up...
+                if self.path[0].position['y'] < self.position['y']:
+                    new_direction = UP
+                # If next waypoint is down...
+                elif self.position['y'] < self.path[0].position['y']:
+                    new_direction = DOWN
 
-        current_tile = city_map.get_current_tile(self.position)
-        proposed_tile = self.get_tile_in_direction(new_direction, city_map)
-        self.move_in_direction(new_direction, proposed_tile, current_tile)
+            # ...or maybe we're on the right row instead...
+            elif self.path[0].position['y'] == self.position['y']:
+                # If next waypoint is left...
+                if self.path[0].position['x'] < self.position['x']:
+                    new_direction = LEFT
+                # If next waypoint is right...
+                elif self.position['x'] < self.path[0].position['x']:
+                    new_direction = RIGHT
+
+            current_tile = city_map.get_current_tile(self.position)
+            proposed_tile = self.get_tile_in_direction(new_direction, city_map)
+            self.move_in_direction(new_direction, proposed_tile, current_tile)
+
+    def get_velocity(self):
+        if method != "flocking":
+            return 1
+        cars_ahead = self.get_cars_between_me_and_next_intersection()
+
+        if len(cars_ahead) > 0:
+            return 2  # Go slightly faster, but not excessively faster (there are still speed limits and stuff)
+        else:
+            return 1
+
+    def get_cars_between_me_and_next_intersection(self):
+        """Gets a list of cars between this car and the next intersection the car is approaching.  We only look at the
+        cars straight ahead and cutoff the range at the nearest intersection straight ahead, because we don't want to
+        start trying to flock to cars several blocks ahead.  And since cars will probably be going in a different
+        direction after the intersection (and this car will turn rather than going straight over 50% of the time), we
+        don't pay any attention to cars past the next intersection.
+
+        :return: List of the cars which we can flock to
+        """
+        next_intersection_tile = self.path[0]
+
+        tiles = self.city_map.get_tiles_between_tile_a_and_tile_b(self.city_map.get_tile_at_position(self.position),
+                                                                  next_intersection_tile)
+
+        cars = []
+        for tile in tiles:
+            if tile.car is not None:
+                cars.append(tile.car)
+
+        return cars
 
     def draw(self):
         x = self.position['x'] * CELLSIZE
@@ -220,3 +281,28 @@ class Vehicle:
     def explode(self):
         # print("BOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOM!!!!!!")
         pass
+
+    def __del__(self):
+        warnings.warn("RE-ENABLE LOGGING!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
+
+        # print("DESTROYING CAR")
+        # self.position = None
+        # self.destination = None
+        # self.previous_position = None
+        # self.direction = None
+        # self.city_map = None
+        # self.path = None
+        # self.original_path = None
+        #
+        # self.turn_to_direction_map = None
+        #
+        # self.body_color = None
+        # self.outline_color = None
+        # self.destination_reached = None
+        #
+        # print(f"Frames spent waiting at red lights: {self.frames_waited_at_red_lights}")
+        # with open(logfile_name, 'a') as outfile:
+        #     writer = csv.writer(outfile, delimiter=',')
+        #     writer.writerow([self.frames_waited_at_red_lights, method])
+        # self.frames_waited_at_red_lights = None
+

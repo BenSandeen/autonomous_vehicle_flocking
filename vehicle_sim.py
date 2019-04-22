@@ -40,6 +40,10 @@ def run_game():
             if car.destination_reached:
                 car.destroy()
                 cars.remove(car)
+                del car
+
+                # # Create a new car in its stead
+                cars.append(Vehicle(ORANGE, DARKORANGE, city_map))
 
         DISPLAYSURF.fill(BGCOLOR)
         draw_grid(city_map)

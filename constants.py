@@ -1,7 +1,7 @@
 import pygame
 
 
-FPS = 8
+FPS = 48
 WINDOWWIDTH = 640 + 320 + 192
 WINDOWHEIGHT = 480 + 240 + 144
 CELLSIZE = 8
@@ -9,8 +9,10 @@ assert WINDOWWIDTH % CELLSIZE == 0, "Window width must be a multiple of cell siz
 assert WINDOWHEIGHT % CELLSIZE == 0, "Window height must be a multiple of cell size."
 CELLWIDTH = int(WINDOWWIDTH / CELLSIZE)
 CELLHEIGHT = int(WINDOWHEIGHT / CELLSIZE)
-NUM_CARS = 31
-MAX_DIST_WITHOUT_TURNING = int(min(CELLWIDTH, CELLHEIGHT) / 3)
+NUM_CARS = 61
+assert NUM_CARS < 130  # Simulation doesn't seem to want to run at all if there are too many cars
+BLOCKLENGTH = 24
+# MAX_DIST_WITHOUT_TURNING = int(min(CELLWIDTH, CELLHEIGHT) / 3)
 
 #                   R    G    B
 WHITE           = (255, 255, 255)
@@ -44,3 +46,6 @@ pygame.init()
 FPSCLOCK = pygame.time.Clock()
 DISPLAYSURF = pygame.display.set_mode((WINDOWWIDTH, WINDOWHEIGHT))
 BASICFONT = pygame.font.Font('freesansbold.ttf', 18)
+
+logfile_name = "waiting_times.csv"
+method = "flocking"
