@@ -23,7 +23,6 @@ def main():
 def run_game():
     city_map = make_map()
 
-    # Set a random start point
     cars = []
     for i in range(NUM_CARS):
         cars.append(Vehicle(ORANGE, DARKORANGE, city_map))
