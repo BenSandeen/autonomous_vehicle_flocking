@@ -44,8 +44,12 @@ def run_game():
         DISPLAYSURF.fill(BGCOLOR)
         draw_grid(city_map)
 
+        city_map.draw_lights()
+
         for car in cars:
             car.draw()
+
+        city_map.update_traffic_lights()
 
         pygame.display.update()
         FPSCLOCK.tick(FPS)

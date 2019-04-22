@@ -162,10 +162,12 @@ class Vehicle:
         try:
             if tile in [self.get_tile_in_direction(direction, self.city_map) for direction in all_directions]:
                 if tile.is_road:
-                    if not tile.car:
-                        return True
-                    elif tile.car.direction != self.direction:
-                        return True
+                    if tile.light is None or tile.light.get_light_for_direction_of_travel(self.direction) != LightColor.red:
+                        if not tile.car:
+                            return True
+                        # For simplicity, each tile represents a whole road (i.e., traffic in both directions)
+                        elif tile.car.direction != self.direction:
+                            return True
             return False
         except AttributeError:
             pass

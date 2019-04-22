@@ -3,11 +3,13 @@ from copy import deepcopy
 
 from constants import *
 from utilities import *
+from traffic_light import *
 
 
 class Map:
     def __init__(self, tiles):
         self.tiles = tiles
+        self.traffic_lights = []
         self.intersection_tiles = self.get_intersection_tiles()
     #     self.intersections_graph = self.create_intersections_graph()
     #
@@ -26,6 +28,10 @@ class Map:
     #
     #     return graph
 
+    def update_traffic_lights(self):
+        for tile in self.intersection_tiles:
+            tile.light.change_lights_possibly()
+
     def get_intersection_tiles(self):
         """Gets all tiles located at intersections.  This is important for pathfinding and placing street lights
 
@@ -39,9 +45,15 @@ class Map:
             tile_right = self.get_tile_right(tile.position)
 
             if (tile_up.is_road or tile_down.is_road) and (tile_left.is_road or tile_right.is_road):
+                tile.light = TrafficLight(tile.position)
+                self.traffic_lights.append(tile.light)
                 intersection_tiles.append(tile)
 
         return intersection_tiles
+
+    def draw_lights(self):
+        for light in self.traffic_lights:
+            light.draw()
 
     def get_tile_at_position(self, position):
         return [t for t in self.get_flat_list_of_tiles() if
@@ -186,6 +198,7 @@ class Tile:
         self.position = deepcopy(position)
         self.is_road = is_road
         self.car = None  # The car, if any, on the current tile
+        self.light = None
 
     def add_car(self, car):
         if self.car is not None:
