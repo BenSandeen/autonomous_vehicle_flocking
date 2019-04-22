@@ -37,6 +37,9 @@ def run_game():
 
         for car in cars:
             car.move(city_map)
+            if car.destination_reached:
+                car.destroy()
+                cars.remove(car)
 
         DISPLAYSURF.fill(BGCOLOR)
         draw_grid(city_map)

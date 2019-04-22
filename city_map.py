@@ -3,7 +3,6 @@ from copy import deepcopy
 
 from constants import *
 from utilities import *
-from graph import *
 
 
 class Map:
@@ -131,12 +130,8 @@ class Map:
         adjacent_tiles = []
 
         # If we're not at an intersection, just get the two intersections at end of the which block we're on
-        # current_pos_is_intersection = True
         if (position['x'], position['y']) not in [(tile.position['x'], tile.position['y']) for tile in
                                                   self.intersection_tiles]:
-            # raise ValueError(f"Tile at {position} is not an intersection tile.  This method is to be used only to find "
-            #                  f"intersection tiles adjacent to other intersection tiles, not just any random position.")
-            # current_pos_is_intersection = False
             adjacent_tiles.append(self.get_tile_at_position(self.get_nearest_intersections_positions(position)))
             adjacent_tiles.append(self.get_tile_at_position(
                 self.get_nearest_intersections_positions(position, excluded_intersections=[adjacent_tiles[0]])))
@@ -188,7 +183,6 @@ class Tile:
         :param position: Position of the tile
         :param is_road:  Bool, whether or not this tile is a road tile (and hence drivable or not)
         """
-        # self.position = {'x': position['x'], 'y': position['y']}
         self.position = deepcopy(position)
         self.is_road = is_road
         self.car = None  # The car, if any, on the current tile
@@ -240,7 +234,6 @@ def make_map():
 
             # We'll handle the `drop` and `obstacle` stuff later, because we don't want to have too many drops or
             # obstacles that the cars can't move
-            # tile = Tile(position={'x': x, 'y': y}, dirtiness=dirt_level, drop=False, obstacle=False, pet=False)
             else:
                 tile = Tile(position={'x': x, 'y': y}, is_road=False)
                 tiles[row_idx].append(tile)
