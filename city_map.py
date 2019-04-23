@@ -305,15 +305,15 @@ class Tile:
         self.light = None
 
     def add_car(self, car):
-        if self.car is not None:
-            car.explode()
+        # if self.car is not None:
+        #     car.explode()
         self.car = car
 
     def remove_car(self, car):
-        if self.car != car:
-            # Note from car owner's manual: If your car explodes upon startup, this is not unexpected behavior.
-            # Please continue to enjoy your car!
-            car.explode()
+        # if self.car != car:
+        #     # Note from car owner's manual: If your car explodes upon startup, this is not unexpected behavior.
+        #     # Please continue to enjoy your car!
+        #     car.explode()
         self.car = None
 
 

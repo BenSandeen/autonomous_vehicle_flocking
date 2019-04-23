@@ -15,7 +15,7 @@ def main():
 
     pygame.display.set_caption('ALASKAN BULL WORMS!!!!!')
 
-    show_start_screen()
+    # show_start_screen()
     while True:
         run_game()
 

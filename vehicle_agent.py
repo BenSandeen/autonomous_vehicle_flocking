@@ -275,12 +275,10 @@ class Vehicle:
         y = self.position['y'] * CELLSIZE
         car_rect = pygame.Rect(x, y, CELLSIZE, CELLSIZE)
         pygame.draw.rect(DISPLAYSURF, self.outline_color, car_rect)
-        # car_inner_rect = pygame.Rect(x + 4, y + 4, CELLSIZE - 8, CELLSIZE - 8)
-        # pygame.draw.rect(DISPLAYSURF, self.body_color, car_inner_rect)
 
-    def explode(self):
-        # print("BOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOM!!!!!!")
-        pass
+    # def explode(self):
+    #     # print("BOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOM!!!!!!")
+    #     pass
 
     def __del__(self):
         # warnings.warn("RE-ENABLE LOGGING!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
