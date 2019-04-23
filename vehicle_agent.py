@@ -1,4 +1,4 @@
-import warnings
+import warnings, csv
 
 from city_map import *
 
@@ -283,26 +283,26 @@ class Vehicle:
         pass
 
     def __del__(self):
-        warnings.warn("RE-ENABLE LOGGING!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
+        # warnings.warn("RE-ENABLE LOGGING!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
 
-        # print("DESTROYING CAR")
-        # self.position = None
-        # self.destination = None
-        # self.previous_position = None
-        # self.direction = None
-        # self.city_map = None
-        # self.path = None
-        # self.original_path = None
-        #
-        # self.turn_to_direction_map = None
-        #
-        # self.body_color = None
-        # self.outline_color = None
-        # self.destination_reached = None
-        #
-        # print(f"Frames spent waiting at red lights: {self.frames_waited_at_red_lights}")
-        # with open(logfile_name, 'a') as outfile:
-        #     writer = csv.writer(outfile, delimiter=',')
-        #     writer.writerow([self.frames_waited_at_red_lights, method])
-        # self.frames_waited_at_red_lights = None
+        print("DESTROYING CAR")
+        self.position = None
+        self.destination = None
+        self.previous_position = None
+        self.direction = None
+        self.city_map = None
+        self.path = None
+        self.original_path = None
+
+        self.turn_to_direction_map = None
+
+        self.body_color = None
+        self.outline_color = None
+        self.destination_reached = None
+
+        print(f"Frames spent waiting at red lights: {self.frames_waited_at_red_lights}")
+        with open(logfile_name, 'a') as outfile:
+            writer = csv.writer(outfile, delimiter=',')
+            writer.writerow([self.frames_waited_at_red_lights, method])
+        self.frames_waited_at_red_lights = None
 
